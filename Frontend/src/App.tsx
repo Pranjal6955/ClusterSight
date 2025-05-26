@@ -26,8 +26,8 @@ function App() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">MetricsView</h1>
-              <p className="text-gray-400 text-sm">Real-time system monitoring</p>
+              <h1 className="text-2xl font-bold text-white">MetricsFlow</h1>
+              <p className="text-gray-400 text-sm">Real-time container monitoring</p>
             </div>
           </div>
           <a
@@ -46,7 +46,7 @@ function App() {
         </main>
 
         <footer className="mt-12 text-center text-gray-500 text-sm">
-          <p>© 2025 MetricsView. All rights reserved.</p>
+          <p>© 2025 MetricsFlow. All rights reserved.</p>
           <p className="mt-1">Connected to backend at localhost:8081</p>
         </footer>
       </div>
