@@ -1,29 +1,25 @@
-
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
+import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
-import ClusterDetails from './pages/ClusterDetails';
+import ClusterDetail from './pages/ClusterDetail';
+import NotFound from './pages/NotFound';
+import './App.css';
 
 function App() {
-
-
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50">
-        <Navbar />
-        <div className="flex h-[calc(100vh-73px)]">
-          <Sidebar />
-          <main className="flex-1 overflow-auto">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/cluster/:id" element={<ClusterDetails />} />
-            </Routes>
-          </main>
-        </div>
+      <div className="App">
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/cluster/:clusterName" element={<ClusterDetail />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
       </div>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

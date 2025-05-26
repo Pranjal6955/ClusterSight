@@ -3,11 +3,23 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 
 	"clustersight/routes"
 	"clustersight/services"
 )
+
+func findAvailablePort(startPort int) string {
+	for port := startPort; port <= startPort+10; port++ {
+		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err == nil {
+			ln.Close()
+			return fmt.Sprintf("%d", port)
+		}
+	}
+	return fmt.Sprintf("%d", startPort) // fallback to original port
+}
 
 func main() {
 	// Initialize Kubernetes service
@@ -19,28 +31,39 @@ func main() {
 		log.Println("Make sure your kubeconfig is properly configured")
 	}
 
-	// Setup routes
-	router := routes.SetupRoutes(k8sService)
-
-	// Get port from environment variable or default to 8080
+	// Get port from environment variable or find available port
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// Update server address to use the port from environment
+	// Check if port is available, if not find an alternative
+	ln, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		log.Printf("Port %s is in use, finding alternative...", port)
+		port = findAvailablePort(8080)
+		log.Printf("Using port %s instead", port)
+	} else {
+		ln.Close()
+	}
+
+	// Setup routes
+	router := routes.SetupRoutes(k8sService)
+
+	// Update server address to use the determined port
 	serverAddr := fmt.Sprintf(":%s", port)
 
 	// Start server
 	log.Printf("Starting ClusterSight API server on %s", serverAddr)
+	log.Printf("Access the API at: http://localhost:%s", port)
 	log.Println("API endpoints:")
-	log.Println("  GET /api/v1/health")
-	log.Println("  GET /api/v1/clusters")
-	log.Println("  GET /api/v1/clusters/:name/nodes")
-	log.Println("  GET /api/v1/clusters/:name/pods")
-	log.Println("  GET /api/v1/clusters/:name/metrics")
+	log.Printf("  GET http://localhost:%s/api/v1/health", port)
+	log.Printf("  GET http://localhost:%s/api/v1/clusters", port)
+	log.Printf("  GET http://localhost:%s/api/v1/clusters/:name/nodes", port)
+	log.Printf("  GET http://localhost:%s/api/v1/clusters/:name/pods", port)
+	log.Printf("  GET http://localhost:%s/api/v1/clusters/:name/metrics", port)
 
 	if err := router.Run(serverAddr); err != nil {
-		log.Fatalf("Failed to start server:%v", err)
+		log.Fatalf("Failed to start server: %v", err)
 	}
 }
