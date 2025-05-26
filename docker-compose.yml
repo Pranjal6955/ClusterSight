@@ -1,0 +1,83 @@
+services:
+  # cAdvisor - Container metrics collection
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor
+    ports:
+      - "8082:8080" # Changed from 8080:8080 to avoid port conflict
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      # - /var/lib/docker/:/var/lib/docker:ro  # Commented out to avoid mount issues
+    privileged: true
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  # Prometheus - Metrics storage and querying
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - cadvisor
+
+  # Backend - Go Gin API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: clustersight-backend
+    ports:
+      - "8081:8081"
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+      - SERVER_PORT=8081
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - CORS_ORIGINS=http://frontend:3000,http://localhost:3000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+  # Frontend - React application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: clustersight-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://backend:8081
+      - VITE_API_URL=http://backend:8081/api
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - backend
+
+volumes:
+  prometheus_data:
+
+networks:
+  monitoring:
+    driver: bridge
