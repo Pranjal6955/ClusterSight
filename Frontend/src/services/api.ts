@@ -11,28 +11,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor
-api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
-  }
-);
-
 export interface Cluster {
   name: string;
   status: string;
@@ -100,19 +78,19 @@ export const apiService = {
   },
 
   // Get nodes for a cluster
-  async getNodes(clusterName: string): Promise<{ cluster: string; nodes: Node[]; count: number }> {
+  async getClusterNodes(clusterName: string): Promise<{ cluster: string; nodes: Node[]; count: number }> {
     const response = await api.get(`/clusters/${clusterName}/nodes`);
     return response.data;
   },
 
   // Get pods for a cluster
-  async getPods(clusterName: string): Promise<{ cluster: string; pods: Pod[]; count: number }> {
+  async getClusterPods(clusterName: string): Promise<{ cluster: string; pods: Pod[]; count: number }> {
     const response = await api.get(`/clusters/${clusterName}/pods`);
     return response.data;
   },
 
   // Get metrics for a cluster
-  async getMetrics(clusterName: string): Promise<ClusterMetrics> {
+  async getClusterMetrics(clusterName: string): Promise<ClusterMetrics> {
     const response = await api.get(`/clusters/${clusterName}/metrics`);
     return response.data;
   },

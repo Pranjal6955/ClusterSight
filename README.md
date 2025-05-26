@@ -18,7 +18,7 @@
 Built with:
 
 - 🧠 **Backend**: Go + Gin (Kubernetes client-go)
-- 🎨 **Frontend**: React + TypeScript + Tailwind CSS
+- 🎨 **Frontend**: React + TypeScript + Tailwind CSS + Vite
 - 📡 **API**: RESTful services
 - 🐳 **Deployment**: Docker + Kubernetes
 
@@ -41,7 +41,7 @@ Built with:
 
 | Layer        | Technology                        |
 |--------------|-----------------------------------|
-| Frontend     | React, TypeScript, Tailwind CSS   |
+| Frontend     | React, TypeScript, Tailwind CSS, Vite |
 | Backend      | Go, Gin, Kubernetes client-go     |
 | API Comm     | REST, Axios                       |
 | Deployment   | Docker, Kubernetes (Minikube/KIND)|
@@ -81,15 +81,15 @@ go run main.go
 
 The backend will start on port 8080 (or find an available port automatically).
 
-### 🎨 Frontend Setup (React + TypeScript)
+### 🎨 Frontend Setup (React + TypeScript + Vite)
 
 ```bash
 cd ClusterSight/Frontend
 npm install
-npm start
+npm run dev
 ```
 
-The frontend will start on port 3000 and automatically connect to the backend.
+The frontend will start on port 5173 and automatically connect to the backend.
 
 ### 🔗 Full Stack Development
 
@@ -102,11 +102,11 @@ go run main.go
 2. **Start Frontend (in new terminal):**
 ```bash
 cd Frontend
-npm start
+npm run dev
 ```
 
 3. **Access the application:**
-   - Frontend: http://localhost:3000
+   - Frontend: http://localhost:5173
    - Backend API: http://localhost:8080/api/v1
 
 ### 🐳 Docker Setup (Coming Soon)
@@ -145,6 +145,7 @@ ClusterSight/
 │   │   ├── services/
 │   │   └── App.tsx
 │   ├── package.json
+│   ├── vite.config.ts
 │   └── tailwind.config.js
 └── README.md
 ```
@@ -162,10 +163,11 @@ ClusterSight/
 - Ensure backend is running on port 8080
 - Check browser console for CORS errors
 - Verify npm dependencies are installed
+- Frontend runs on port 5173 (Vite default)
 
 ### Connection Issues
 - Backend and frontend must run on different ports
-- CORS is pre-configured for common development ports
+- CORS is pre-configured for development ports (5173, 3000, etc.)
 - Check network connectivity between services
 
 ---

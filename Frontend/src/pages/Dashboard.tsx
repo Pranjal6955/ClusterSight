@@ -1,64 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { apiService, Cluster, ClusterMetrics } from '../services/api';
+import { apiService, Cluster } from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
 
 const Dashboard: React.FC = () => {
   const [clusters, setClusters] = useState<Cluster[]>([]);
-  const [metrics, setMetrics] = useState<Record<string, ClusterMetrics>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboardData();
+    const fetchClusters = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getClusters();
+        setClusters(data.clusters);
+      } catch (err) {
+        setError('Failed to fetch clusters. Make sure the backend is running.');
+        console.error('Error fetching clusters:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClusters();
   }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch clusters
-      const clustersData = await apiService.getClusters();
-      setClusters(clustersData.clusters);
-
-      // Fetch metrics for each cluster
-      const metricsPromises = clustersData.clusters.map(async (cluster) => {
-        try {
-          const metric = await apiService.getMetrics(cluster.name);
-          return { name: cluster.name, metric };
-        } catch (err) {
-          console.error(`Failed to fetch metrics for ${cluster.name}:`, err);
-          return null;
-        }
-      });
-
-      const metricsResults = await Promise.all(metricsPromises);
-      const metricsMap: Record<string, ClusterMetrics> = {};
-      
-      metricsResults.forEach((result) => {
-        if (result) {
-          metricsMap[result.name] = result.metric;
-        }
-      });
-
-      setMetrics(metricsMap);
-    } catch (err) {
-      setError('Failed to fetch dashboard data');
-      console.error('Dashboard error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'connected':
-        return 'bg-green-100 text-green-800';
+        return 'text-green-600 bg-green-100';
       case 'disconnected':
-        return 'bg-red-100 text-red-800';
+        return 'text-red-600 bg-red-100';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -81,7 +55,7 @@ const Dashboard: React.FC = () => {
               <h3 className="text-sm font-medium text-red-800">Error</h3>
               <p className="mt-1 text-sm text-red-700">{error}</p>
               <button
-                onClick={fetchDashboardData}
+                onClick={() => window.location.reload()}
                 className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
               >
                 Retry
@@ -224,7 +198,7 @@ const Dashboard: React.FC = () => {
       {clusters.length === 0 && (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           <h3 className="mt-2 text-sm font-medium text-gray-900">No clusters found</h3>
           <p className="mt-1 text-sm text-gray-500">
