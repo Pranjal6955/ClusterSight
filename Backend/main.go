@@ -1,46 +1,47 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
 
-	"clustersight/routes"
-	"clustersight/services"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+
+	"clustersight-backend/internal/handlers"
+	"clustersight-backend/internal/middleware"
 )
 
 func main() {
-	// Initialize Kubernetes service
-	k8sService := services.NewKubernetesService()
+	// Create Gin router
+	r := gin.Default()
 
-	// Initialize Kubernetes clients
-	if err := k8sService.InitializeClients(); err != nil {
-		log.Printf("Warning: Failed to initialize Kubernetes clients: %v", err)
-		log.Println("Make sure your kubeconfig is properly configured")
+	// Configure CORS
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000", "http://frontend:3000", "*"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	config.AllowHeaders = []string{"*"}
+	config.AllowCredentials = true
+	r.Use(cors.New(config))
+
+	// Apply custom middleware
+	r.Use(middleware.Logger())
+	r.Use(middleware.ErrorHandler())
+
+	// Health check route
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	// API routes - Frontend expects /api/metrics
+	api := r.Group("/api")
+	{
+		api.GET("/metrics", handlers.GetMetrics)
+		api.GET("/containers", handlers.GetContainers)
+		api.GET("/containers/:id/metrics", handlers.GetContainerMetrics)
 	}
-
-	// Setup routes
-	router := routes.SetupRoutes(k8sService)
-
-	// Get port from environment variable or default to 8080
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	// Update server address to use the port from environment
-	serverAddr := fmt.Sprintf(":%s", port)
 
 	// Start server
-	log.Printf("Starting ClusterSight API server on %s", serverAddr)
-	log.Println("API endpoints:")
-	log.Println("  GET /api/v1/health")
-	log.Println("  GET /api/v1/clusters")
-	log.Println("  GET /api/v1/clusters/:name/nodes")
-	log.Println("  GET /api/v1/clusters/:name/pods")
-	log.Println("  GET /api/v1/clusters/:name/metrics")
-
-	if err := router.Run(serverAddr); err != nil {
-		log.Fatalf("Failed to start server:%v", err)
+	log.Println("Server starting on port 8081...")
+	if err := r.Run(":8081"); err != nil {
+		log.Fatal("Failed to start server:", err)
 	}
 }
